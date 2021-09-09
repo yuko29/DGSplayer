@@ -1,0 +1,7 @@
+test*
+Weather/
+venv/
+.vscode/
+layout_colorwidget.py
+main_uit.py
+gui.py
