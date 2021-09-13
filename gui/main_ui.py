@@ -8,7 +8,7 @@ from PyQt5.QtGui import QPalette, QColor, QBrush
 from PyQt5.QtCore import Qt, QUrl, QTimer
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QSoundEffect
 import sys
-import os, time
+import os, time, re
 import configparser
 
 class MainUI(QMainWindow):
@@ -38,6 +38,7 @@ class MainUI(QMainWindow):
         # top right frame
         self.top_right_frame = QFrame()
         self.top_right_layout = QVBoxLayout(self.top_right_frame)
+        self.cur_play_title = QLabel("OwO", self)
         self.startTimeLabel = QLabel('00:00')
         self.endTimeLabel = QLabel('00:00')
         self.slider = QSlider(Qt.Horizontal, self)
@@ -64,6 +65,7 @@ class MainUI(QMainWindow):
         self.hBoxButton.addWidget(self.prevBtn)
         self.hBoxButton.addWidget(self.modeCom)
         self.hBoxButton.addWidget(self.volumeSlider)
+        self.top_right_layout.addWidget(self.cur_play_title)
         self.top_right_layout.addLayout(self.hBoxSlider)
         self.top_right_layout.addLayout(self.hBoxButton)
 
@@ -114,8 +116,11 @@ class MainUI(QMainWindow):
 
     # Write and play the currently set music function ：
     def setCurPlaying(self):
+        # cur_playing_song is the whole path to the file
         self.cur_playing_song = self.songs_list[self.musicList.currentRow()][-1]
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.cur_playing_song)))
+        regex = re.compile(r'/(\w+)\.aac')
+        self.cur_play_title.setText(regex.search(self.cur_playing_song).group(1))
     
     def playMusic(self):
         if self.musicList.count() == 0:
