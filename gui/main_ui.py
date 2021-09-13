@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QDesktopWidget, QStyleFa
                             QStackedLayout)
 from PyQt5.QtGui import QPalette, QColor, QBrush
 from PyQt5.QtCore import Qt, QUrl, QTimer
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QSoundEffect
 import sys
 import os, time
 import configparser
@@ -41,6 +41,8 @@ class MainUI(QMainWindow):
         self.startTimeLabel = QLabel('00:00')
         self.endTimeLabel = QLabel('00:00')
         self.slider = QSlider(Qt.Horizontal, self)
+        self.volumeSlider = QSlider(Qt.Horizontal, self)
+        self.volumeSlider.setValue(50)
         self.playBtn = QPushButton(' Play ', self)
         self.prevBtn = QPushButton(' Last song ', self)
         self.nextBtn = QPushButton(' Next song ', self)
@@ -61,7 +63,7 @@ class MainUI(QMainWindow):
         self.hBoxButton.addWidget(self.nextBtn)
         self.hBoxButton.addWidget(self.prevBtn)
         self.hBoxButton.addWidget(self.modeCom)
-        self.hBoxButton.addWidget(self.openBtn)
+        self.hBoxButton.addWidget(self.volumeSlider)
         self.top_right_layout.addLayout(self.hBoxSlider)
         self.top_right_layout.addLayout(self.hBoxButton)
 
@@ -97,6 +99,7 @@ class MainUI(QMainWindow):
         self.timer.start(1000)
         self.timer.timeout.connect(self.playByMode)
         self.slider.sliderMoved[int].connect(lambda: self.player.setPosition(self.slider.value()))
+         
 
         self.settingfilename = '../config.ini'
         self.loadingSetting()
@@ -161,6 +164,7 @@ class MainUI(QMainWindow):
     
     #  Play automatically according to play mode , And refresh the progress bar 
     def playByMode(self):
+        self.player.setVolume(self.volumeSlider.value())
         #  Refresh progress bar 
         if (not self.is_pause) and (not self.is_switching):
             self.slider.setMinimum(0)
@@ -208,6 +212,9 @@ class MainUI(QMainWindow):
                 self.cur_playing_song = self.songs_list[self.musicList.currentRow()][-1]
         self.left_StackedLayout.setCurrentIndex(1)
     
+    def volumeChange(self):
+        self.sound_effect.setVolume(self.slider.value()/10)
+
     #  Confirm if the user really wants to exit 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message',
