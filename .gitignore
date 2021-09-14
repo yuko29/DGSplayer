@@ -5,3 +5,6 @@ venv/
 layout_colorwidget.py
 main_uit.py
 gui.py
+build/
+dist/
+__pycache__

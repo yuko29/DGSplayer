@@ -1,11 +1,10 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, 
+from PyQt5.QtWidgets import (QMainWindow, QMessageBox, 
                             QSlider, QLabel, QLineEdit, QPushButton, QVBoxLayout, 
                             QHBoxLayout, QFrame, QSplitter, QComboBox, QPlainTextEdit, QListWidget,
                             QStackedLayout)
 from PyQt5.QtCore import Qt, QUrl, QTimer
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-import sys
 import os, random, time, re
 from pymongo import MongoClient
 import configparser
@@ -15,7 +14,7 @@ class MainUI(QMainWindow):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent=parent)
         
-        self.settingfilename = '../config.ini'
+        self.settingfilename = 'config.ini'
         self.loadingSetting()
         self.initUI()
         
@@ -260,8 +259,4 @@ class MainUI(QMainWindow):
             event.ignore()
 
 
-if __name__ == '__main__': 
-    app = QApplication(sys.argv)
-    gui = MainUI()
-    gui.show()
-    sys.exit(app.exec_())
+
