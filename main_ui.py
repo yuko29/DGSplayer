@@ -1,14 +1,13 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QDesktopWidget, QStyleFactory, QWidget,
-                            QGridLayout, QHeaderView, QTableWidgetItem, QMessageBox, QFileDialog,
-                            QSlider, QLabel, QLineEdit, QPushButton, QTableWidget, QVBoxLayout, 
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QMessageBox, 
+                            QSlider, QLabel, QLineEdit, QPushButton, QVBoxLayout, 
                             QHBoxLayout, QFrame, QSplitter, QComboBox, QPlainTextEdit, QListWidget,
                             QStackedLayout)
-from PyQt5.QtGui import QPalette, QColor, QBrush
 from PyQt5.QtCore import Qt, QUrl, QTimer
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QSoundEffect
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 import sys
-import os, time, re
+import os, random, time, re
+from pymongo import MongoClient
 import configparser
 
 class MainUI(QMainWindow):
@@ -16,6 +15,8 @@ class MainUI(QMainWindow):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent=parent)
         
+        self.settingfilename = '../config.ini'
+        self.loadingSetting()
         self.initUI()
         
         
@@ -27,7 +28,7 @@ class MainUI(QMainWindow):
         self.left_StackedLayout = QStackedLayout(self.left_frame)
         self.btn_tmp = QPushButton(self.left_frame)
         self.btn_tmp.setText("開播！")
-        self.btn_tmp.pressed.connect(self.activate_tab_1)
+        self.btn_tmp.pressed.connect(self.show_play_list)
         self.musicList = QListWidget()
         self.musicList.setSortingEnabled(True)
         self.musicList.itemDoubleClicked.connect(self.doubleClicked)
@@ -42,7 +43,7 @@ class MainUI(QMainWindow):
         self.endTimeLabel = QLabel('00:00')
         self.slider = QSlider(Qt.Horizontal, self)
         self.volumeSlider = QSlider(Qt.Horizontal, self)
-        self.volumeSlider.setValue(50)
+        self.volumeSlider.setValue(0)
         self.playBtn = QPushButton(' Play ', self)
         self.prevBtn = QPushButton(' Last song ', self)
         self.nextBtn = QPushButton(' Next song ', self)
@@ -79,6 +80,7 @@ class MainUI(QMainWindow):
         self.content = QPlainTextEdit(self)
         self.submit_btn = QPushButton('save', self)
         self.submit_btn.setMaximumWidth(60)
+        self.submit_btn.clicked.connect(self.saveContent)
         self.bottom_layout.addLayout(self.ttl_line_layout)
         self.bottom_layout.addWidget(self.content)
         self.bottom_layout.addWidget(self.submit_btn, alignment=Qt.AlignRight)
@@ -96,7 +98,7 @@ class MainUI(QMainWindow):
         
         self.setCentralWidget(splitter2)
 
-        self.cur_path = "/Users/huyufang/DGS"
+        # self.cur_path = "/Users/huyufang/DGS"
         self.song_formats = ['mp3', 'm4a', 'aac']
         self.songs_list = []
         self.cur_playing_song = ''
@@ -110,8 +112,6 @@ class MainUI(QMainWindow):
         self.slider.sliderMoved[int].connect(lambda: self.player.setPosition(self.slider.value()))
          
 
-        self.settingfilename = '../config.ini'
-        self.loadingSetting()
 
     #  Load profile 
     def loadingSetting(self):
@@ -119,7 +119,11 @@ class MainUI(QMainWindow):
         config.read(self.settingfilename)
         if not os.path.isfile(self.settingfilename):
             return
-        self.cur_path = config.get('DGSPlayer', 'PATH')
+        self.cur_path = config.get('MusicDir', 'PATH')
+        self.db_uri = config.get('Database', 'uri')
+        self.db_client = MongoClient(self.db_uri)
+        self.db = self.db_client[config.get('Database', 'dbname')]
+        self.db_collect = self.db[config.get('Database', 'collection')]
 
     # Write and play the currently set music function ：
     def setCurPlaying(self):
@@ -127,7 +131,9 @@ class MainUI(QMainWindow):
         self.cur_playing_song = self.songs_list[self.musicList.currentRow()][-1]
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.cur_playing_song)))
         regex = re.compile(r'/(\w+)\.aac')
-        self.cur_play_title.setText(regex.search(self.cur_playing_song).group(1))
+        file = regex.search(self.cur_playing_song).group(1)
+        self.cur_play_title.setText(file)
+        self.loadContent(file)
     
     def playMusic(self):
         if self.musicList.count() == 0:
@@ -212,7 +218,7 @@ class MainUI(QMainWindow):
                 self.playMusic()
                 self.is_switching = False
 
-    def activate_tab_1(self):
+    def show_play_list(self):
         self.musicList.clear()
         for song in os.listdir(self.cur_path):
             if song.split('.')[-1] in self.song_formats:
@@ -227,6 +233,22 @@ class MainUI(QMainWindow):
     def volumeChange(self):
         self.sound_effect.setVolume(self.slider.value()/10)
 
+    def loadContent(self, file):
+        result = self.db_collect.find_one({'file': file})
+        if result is not None:
+            self.title_input.setText(result['title'])
+            self.content.setPlainText(result['content'])
+        else:
+            self.title_input.setText('')
+            self.content.setPlainText('')
+    
+    def saveContent(self):
+        if self.db_collect.find_one({'file': self.cur_play_title.text()}) is None:
+            self.db_collect.insert_one({'file': self.cur_play_title.text(), 'title': self.title_input.text(), 'content': self.content.toPlainText()})
+        else:
+            self.db_collect.update_one({'file': self.cur_play_title.text()}, {"$set": {'title': self.title_input.text(), 'content': self.content.toPlainText()}})
+
+
     #  Confirm if the user really wants to exit 
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message',
@@ -236,10 +258,9 @@ class MainUI(QMainWindow):
             event.accept()
         else:
             event.ignore()
-        
-        
-if __name__ == '__main__':
-    
+
+
+if __name__ == '__main__': 
     app = QApplication(sys.argv)
     gui = MainUI()
     gui.show()
