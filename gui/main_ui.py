@@ -14,7 +14,7 @@ class MainUI(QMainWindow):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent=parent)
         
-        self.settingfilename = 'config.ini'
+        self.settingfilename = '/Users/huyufang/Projects/DGSplayer/config.ini'
         self.loadingSetting()
         self.initUI()
         
