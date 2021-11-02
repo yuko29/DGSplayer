@@ -42,7 +42,7 @@ class MainUI(QMainWindow):
         self.endTimeLabel = QLabel('00:00')
         self.slider = QSlider(Qt.Horizontal, self)
         self.volumeSlider = QSlider(Qt.Horizontal, self)
-        self.volumeSlider.setValue(0)
+        self.volumeSlider.setValue(20)
         self.playBtn = QPushButton(' Play ', self)
         self.prevBtn = QPushButton(' Last song ', self)
         self.nextBtn = QPushButton(' Next song ', self)
