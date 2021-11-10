@@ -8,6 +8,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 import os, random, time, re
 from pymongo import MongoClient
 import configparser
+import qdarkstyle
 
 class MainUI(QMainWindow):
     
@@ -17,6 +18,8 @@ class MainUI(QMainWindow):
         self.settingfilename = '/Users/huyufang/Projects/DGSplayer/config.ini'
         self.loadingSetting()
         self.initUI()
+        self.setWindowOpacity(0.9)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         
         
     def initUI(self):      
