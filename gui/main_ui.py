@@ -132,7 +132,7 @@ class MainUI(QMainWindow):
         # cur_playing_song is the whole path to the file
         self.cur_playing_song = self.songs_list[self.musicList.currentRow()][-1]
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.cur_playing_song)))
-        regex = re.compile(r'/(\w+)\.aac')
+        regex = re.compile(r'/(\w+)\.\w+$')
         file = regex.search(self.cur_playing_song).group(1)
         self.cur_play_title.setText(file)
         self.loadContent(file)
