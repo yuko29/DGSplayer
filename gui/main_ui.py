@@ -47,7 +47,7 @@ class MainUI(QMainWindow):
         self.volumeSlider = QSlider(Qt.Horizontal, self)
         self.volumeSlider.setValue(20)
         self.playBtn = QPushButton(' Play ', self)
-        self.prevBtn = QPushButton(' Last song ', self)
+        self.prevBtn = QPushButton(' Prev song ', self)
         self.nextBtn = QPushButton(' Next song ', self)
         self.openBtn = QPushButton(' Open folder ', self)
         self.playBtn.clicked.connect(self.playMusic)
@@ -63,8 +63,8 @@ class MainUI(QMainWindow):
         self.hBoxSlider.addWidget(self.endTimeLabel)
         self.hBoxButton = QHBoxLayout()
         self.hBoxButton.addWidget(self.playBtn)
-        self.hBoxButton.addWidget(self.nextBtn)
         self.hBoxButton.addWidget(self.prevBtn)
+        self.hBoxButton.addWidget(self.nextBtn)
         self.hBoxButton.addWidget(self.modeCom)
         self.hBoxButton.addWidget(self.volumeSlider)
         self.top_right_layout.addWidget(self.cur_play_title)
@@ -87,6 +87,10 @@ class MainUI(QMainWindow):
         self.bottom_layout.addWidget(self.content)
         self.bottom_layout.addWidget(self.submit_btn, alignment=Qt.AlignRight)
         
+        # export region
+        self.export_btn = QPushButton('export', self)
+        self.export_btn.setMaximumWidth(60)
+        
         splitter1 = QSplitter(Qt.Vertical)
         splitter1.addWidget(self.top_right_frame)
         splitter1.addWidget(self.bottom_frame)
@@ -95,10 +99,15 @@ class MainUI(QMainWindow):
         splitter2.addWidget(self.left_frame)
         splitter2.addWidget(splitter1)
         
+        main_widget = QFrame()
+        main_widget_layout = QVBoxLayout(main_widget)
+        main_widget_layout.addWidget(splitter2)
+        main_widget_layout.addWidget(self.export_btn)
+        
         #self.setGeometry(300, 300, 300, 200)
         self.setWindowTitle('DGS player')
         
-        self.setCentralWidget(splitter2)
+        self.setCentralWidget(main_widget)
 
         # self.cur_path = "/Users/huyufang/DGS"
         self.song_formats = ['mp3', 'm4a', 'aac']
@@ -114,7 +123,6 @@ class MainUI(QMainWindow):
         self.slider.sliderMoved[int].connect(lambda: self.player.setPosition(self.slider.value()))
          
 
-
     #  Load profile 
     def loadingSetting(self):
         config = configparser.ConfigParser()
@@ -127,15 +135,15 @@ class MainUI(QMainWindow):
         self.db = self.db_client[config.get('Database', 'dbname')]
         self.db_collect = self.db[config.get('Database', 'collection')]
 
-    # Write and play the currently set music function ：
+    # Switch to the select song and disply its information
     def setCurPlaying(self):
         # cur_playing_song is the whole path to the file
         self.cur_playing_song = self.songs_list[self.musicList.currentRow()][-1]
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.cur_playing_song)))
         regex = re.compile(r'/(\w+)\.\w+$')
         file = regex.search(self.cur_playing_song).group(1)
-        self.cur_play_title.setText(file)
-        self.loadContent(file)
+        self.cur_play_title.setText(file)   # set the title
+        self.loadSongContent(file)              # load the text content
     
     def playMusic(self):
         if self.musicList.count() == 0:
@@ -151,6 +159,7 @@ class MainUI(QMainWindow):
             self.player.pause()
             self.is_pause = True
             self.playBtn.setText(' Play ')
+    
     def prevMusic(self):
         self.slider.setValue(0)
         if self.musicList.count() == 0:
@@ -235,7 +244,7 @@ class MainUI(QMainWindow):
     def volumeChange(self):
         self.sound_effect.setVolume(self.slider.value()/10)
 
-    def loadContent(self, file):
+    def loadSongContent(self, file):
         result = self.db_collect.find_one({'file': file})
         if result is not None:
             self.title_input.setText(result['title'])
